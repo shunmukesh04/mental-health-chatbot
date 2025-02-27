@@ -1,6 +1,6 @@
 import streamlit as st
 from langchain.embeddings import HuggingFaceBgeEmbeddings
-from langchain.document_loaders import PyPDFLoader
+from langchain.document_loaders import PyMuPDFLoader  # Ensure PyMuPDFLoader is used
 from langchain.vectorstores import Chroma
 from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate
@@ -12,21 +12,22 @@ import tempfile
 def initialize_llm():
     llm = ChatGroq(
         temperature=0,
-        groq_api_key="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",  # Replace with your actual API key
+        groq_api_key="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",  # Replace with actual API key
         model_name="llama-3.3-70b-versatile"
     )
     return llm
-from langchain_community.vectorstores import Chroma
-from langchain.embeddings import HuggingFaceBgeEmbeddings
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.document_loaders import PyMuPDFLoader  # Ensure this is installed
 
 def create_vector_db(uploaded_files):
     documents = []
-    
-    # Load PDFs properly
-    for file in uploaded_files:
-        loader = PyMuPDFLoader(file)  # Load the PDF
+
+    # Process uploaded PDFs correctly
+    for uploaded_file in uploaded_files:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_file:
+            temp_file.write(uploaded_file.read())  # Write uploaded file to temp storage
+            temp_file_path = temp_file.name  # Get temp file path
+
+        # Load the PDF file correctly
+        loader = PyMuPDFLoader(temp_file_path)
         documents.extend(loader.load())
 
     # Check if documents are loaded correctly
@@ -35,8 +36,8 @@ def create_vector_db(uploaded_files):
 
     # Split text into smaller chunks
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
-    texts = text_splitter.split_documents(documents)  # Ensure this gets valid documents
-    
+    texts = text_splitter.split_documents(documents)
+
     embeddings = HuggingFaceBgeEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
     # Use DuckDB instead of SQLite
@@ -47,8 +48,6 @@ def create_vector_db(uploaded_files):
 
     vector_db.persist()
     return vector_db
-
-
 
 def setup_qa_chain(vector_db, llm):
     retriever = vector_db.as_retriever()
