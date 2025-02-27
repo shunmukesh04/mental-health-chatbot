@@ -1,6 +1,6 @@
 import streamlit as st
 from langchain.embeddings import HuggingFaceBgeEmbeddings
-from langchain.document_loaders import PyMuPDFLoader  # Ensure PyMuPDFLoader is used
+from langchain.document_loaders import PyPDFLoader  # Ensure PyMuPDFLoader is used
 from langchain.vectorstores import Chroma
 from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate
@@ -19,28 +19,19 @@ def initialize_llm():
 
 def create_vector_db(uploaded_files):
     documents = []
-
-    # Process uploaded PDFs correctly
-    for uploaded_file in uploaded_files:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_file:
-            temp_file.write(uploaded_file.read())  # Write uploaded file to temp storage
-            temp_file_path = temp_file.name  # Get temp file path
-
-        # Load the PDF file correctly
-        loader = PyMuPDFLoader(temp_file_path)
+    
+    for file in uploaded_files:
+        loader = PyPDFLoader(file)
         documents.extend(loader.load())
 
-    # Check if documents are loaded correctly
     if not documents:
         raise ValueError("No text extracted from PDFs. Check file format.")
 
-    # Split text into smaller chunks
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
     texts = text_splitter.split_documents(documents)
 
     embeddings = HuggingFaceBgeEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
-    # Use DuckDB instead of SQLite
     vector_db = Chroma.from_documents(
         texts, embeddings, persist_directory="./chroma_db",
         client_settings={"chroma_db_impl": "duckdb"}
@@ -48,6 +39,7 @@ def create_vector_db(uploaded_files):
 
     vector_db.persist()
     return vector_db
+
 
 def setup_qa_chain(vector_db, llm):
     retriever = vector_db.as_retriever()
