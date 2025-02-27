@@ -1,6 +1,6 @@
 import streamlit as st
 from langchain.embeddings import HuggingFaceBgeEmbeddings
-from langchain.document_loaders import PyPDFLoader  # Ensure PyMuPDFLoader is used
+from langchain.document_loaders import PyPDFLoader
 from langchain.vectorstores import Chroma
 from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate
