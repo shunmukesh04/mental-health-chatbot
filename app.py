@@ -17,21 +17,16 @@ def initialize_llm():
     )
     return llm
 
-def create_vector_db(pdf_files):
-    documents = []
-    for pdf_file in pdf_files:
-        with tempfile.NamedTemporaryFile(delete=False) as temp_pdf:
-            temp_pdf.write(pdf_file.read())
-            temp_pdf_path = temp_pdf.name
-        loader = PyPDFLoader(temp_pdf_path)
-        documents.extend(loader.load())
-    
+def create_vector_db(documents):
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
     texts = text_splitter.split_documents(documents)
+    
     embeddings = HuggingFaceBgeEmbeddings(model_name='sentence-transformers/all-MiniLM-L6-v2')
-    vector_db = Chroma.from_documents(texts, embeddings, persist_directory='./chroma_db')
+
+    vector_db = Chroma.from_documents(texts, embeddings, persist_directory="./chroma_db")
     vector_db.persist()
     return vector_db
+
 
 def setup_qa_chain(vector_db, llm):
     retriever = vector_db.as_retriever()
