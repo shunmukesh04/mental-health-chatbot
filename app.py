@@ -16,16 +16,38 @@ def initialize_llm():
         model_name="llama-3.3-70b-versatile"
     )
     return llm
+from langchain_community.vectorstores import Chroma
+from langchain.embeddings import HuggingFaceBgeEmbeddings
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.document_loaders import PyMuPDFLoader  # Ensure this is installed
 
-def create_vector_db(documents):
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
-    texts = text_splitter.split_documents(documents)
+def create_vector_db(uploaded_files):
+    documents = []
     
-    embeddings = HuggingFaceBgeEmbeddings(model_name='sentence-transformers/all-MiniLM-L6-v2')
+    # Load PDFs properly
+    for file in uploaded_files:
+        loader = PyMuPDFLoader(file)  # Load the PDF
+        documents.extend(loader.load())
 
-    vector_db = Chroma.from_documents(texts, embeddings, persist_directory="./chroma_db")
+    # Check if documents are loaded correctly
+    if not documents:
+        raise ValueError("No text extracted from PDFs. Check file format.")
+
+    # Split text into smaller chunks
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+    texts = text_splitter.split_documents(documents)  # Ensure this gets valid documents
+    
+    embeddings = HuggingFaceBgeEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+
+    # Use DuckDB instead of SQLite
+    vector_db = Chroma.from_documents(
+        texts, embeddings, persist_directory="./chroma_db",
+        client_settings={"chroma_db_impl": "duckdb"}
+    )
+
     vector_db.persist()
     return vector_db
+
 
 
 def setup_qa_chain(vector_db, llm):
