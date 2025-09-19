@@ -1,6 +1,9 @@
 # 🧠 Mental Health Chatbot (LangChain + Chroma + Groq + Streamlit)
 
 A supportive, empathetic RAG chatbot using LangChain, ChromaDB, Groq LLMs, and Streamlit.
+![WhatsApp Image 2025-09-19 at 11 03 38_1384ce63](https://github.com/user-attachments/assets/f8da64ae-c73a-444f-a2e9-e2e2f0a51d5c)
+![WhatsApp Image 2025-09-19 at 10 51 46_3d4142f4](https://github.com/user-attachments/assets/737dd377-7859-4a7d-9ef0-ce7f5437fd1f)
+
 
 ## Prerequisites
 - Python 3.10+
